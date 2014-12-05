@@ -6,6 +6,18 @@ var badFormMethodNormalization = (function() {
   return form.method !== 'post';
 })();
 
+// IE will throw an exception if a non-GET/POST method is used in the
+// form.method setter.
+var unknownFormMethodSupported = (function() {
+  try {
+    var form = document.createElement('form');
+    form.method = 'BREW';
+    return form.method !== 'BREW';
+  } catch (error) {
+    return false;
+  }
+})();
+
 // Yet another PhantomJS bug
 //   https://github.com/ariya/phantomjs/issues/10873
 var xhrDeleteBodyBuggy = navigator.userAgent.match(/PhantomJS/);
@@ -89,11 +101,13 @@ function submit(form) {
       var form = window.document.getElementById(formId);
       window.CustomElements.upgrade(form);
 
-      form.method = 'UPDATE';
+      if (unknownFormMethodSupported) {
+        form.method = 'BREW';
+      }
       form.action = '/foo';
 
       if (badFormMethodNormalization) {
-        equal(form.method, 'UPDATE', 'form.method should be "UPDATE"');
+        equal(form.method, 'BREW', 'form.method should be "BREW"');
       } else {
         equal(form.method, 'get', 'form.method should be "get"');
       }
