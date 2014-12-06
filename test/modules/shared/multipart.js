@@ -1,6 +1,14 @@
 ['form', 'async-form'].forEach(function(formId) {
   module('shared multipart ' + formId);
 
+  if (!('FormData' in window)) {
+    // Skip multipart tests unless FormData is supported
+    test('skipped', function() {
+      ok(true);
+    });
+    return;
+  }
+
   promiseTest('form multipart POST request with field', 5, function() {
     var ready = QUnit.createFrame();
 
