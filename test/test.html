@@ -10,6 +10,7 @@
   <div id="qunit-fixture"></div>
 
   <script src="../bower_components/qunit/qunit/qunit.js"></script>
+  <script src="qunit-saucelabs.js"></script>
   <script src="../bower_components/es6-promise/promise.js"></script>
   <script>
     QUnit.promiseTest = function(testName, expected, callback) {
@@ -43,9 +44,53 @@
         });
       };
     };
-  </script>
-  <script>QUnit.config.testTimeout = 1000;</script>
 
-  <script src="./test.js"></script>
+    // IE will throw an exception if a non-GET/POST method is used in the
+    // form.method setter.
+    QUnit.unknownFormMethodSupported = (function() {
+      try {
+        var form = document.createElement('form');
+        form.method = 'BREW';
+        return form.method !== 'BREW';
+      } catch (error) {
+        return false;
+      }
+    })();
+
+    // An implementation effect of using XHR as the request, an charset=UTF-8 may
+    // be appended to the raw enctype of the form.
+    //
+    //   https://xhr.spec.whatwg.org/#dom-xmlhttprequest-send-document
+    QUnit.normalizeContentType = function(mimeType) {
+      return mimeType.replace('; charset=UTF-8', '');
+    }
+
+    QUnit.click = function(form) {
+      var event = document.createEvent('Event');
+      event.initEvent('click', true, true);
+      if (form.dispatchEvent(event)) {
+        form.click();
+      }
+    }
+
+    QUnit.submit = function(form) {
+      var event = document.createEvent('Event');
+      event.initEvent('submit', true, true);
+      if (form.dispatchEvent(event)) {
+        form.submit();
+      }
+    }
+  </script>
+  <script>QUnit.config.testTimeout = 5000;</script>
+
+  <script src="./modules/shared/buttons.js"></script>
+  <script src="./modules/shared/cancelable.js"></script>
+  <script src="./modules/shared/fields.js"></script>
+  <script src="./modules/shared/method.js"></script>
+  <script src="./modules/shared/multipart.js"></script>
+  <script src="./modules/accept.js"></script>
+  <script src="./modules/event.js"></script>
+  <script src="./modules/method.js"></script>
+  <script src="./modules/submit-method.js"></script>
 </body>
 </html>
