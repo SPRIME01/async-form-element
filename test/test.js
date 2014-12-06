@@ -102,6 +102,8 @@ function submit(form) {
 
       if (unknownFormMethodSupported) {
         form.method = 'BREW';
+      } else {
+        form.setAttribute('method', 'BREW');
       }
       form.action = '/foo';
 
@@ -448,7 +450,11 @@ promiseTest('form PUT request', 5, function() {
     var form = window.document.getElementById('async-form');
     window.CustomElements.upgrade(form);
 
-    form.method = 'PUT';
+    if (unknownFormMethodSupported) {
+      form.method = 'PUT';
+    } else {
+      form.setAttribute('method', 'PUT');
+    }
     form.action = '/foo/1';
 
     equal(form.asyncMethod, 'put');
@@ -470,7 +476,11 @@ promiseTest('form DELETE request', 5, function() {
     var form = window.document.getElementById('async-form');
     window.CustomElements.upgrade(form);
 
-    form.method = 'DELETE';
+    if (unknownFormMethodSupported) {
+      form.method = 'DELETE';
+    } else {
+      form.setAttribute('method', 'DELETE');
+    }
     form.action = '/foo/1';
 
     equal(form.asyncMethod, 'delete');
