@@ -33,8 +33,7 @@ function normalizeContentType(mimeType) {
 function submit(form) {
   var event = document.createEvent('Event');
   event.initEvent('submit', true, true);
-  form.dispatchEvent(event);
-  if (event.defaultPrevented === false) {
+  if (form.dispatchEvent(event)) {
     form.submit();
   }
 }
@@ -392,14 +391,14 @@ function submit(form) {
       var nextSubmitEvent = new Promise(function(resolve) {
         form.addEventListener('submit', function(event) {
           event.preventDefault();
+          equal(event.defaultPrevented, true);
           resolve(event);
         });
       });
 
       submit(form);
       return nextSubmitEvent;
-    }).then(function(event) {
-      equal(event.defaultPrevented, true);
+    }).then(function() {
       return ready(100);
     }).then(function() {
       ok(false, 'form was submitted');
@@ -422,14 +421,14 @@ function submit(form) {
         form.addEventListener('submit', function(event) {
           event.stopPropagation();
           event.preventDefault();
+          equal(event.defaultPrevented, true);
           resolve(event);
         });
       });
 
       submit(form);
       return nextSubmitEvent;
-    }).then(function(event) {
-      equal(event.defaultPrevented, true);
+    }).then(function() {
       return ready(100);
     }).then(function() {
       ok(false, 'form was submitted');
