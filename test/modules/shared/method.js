@@ -11,11 +11,7 @@
       form.method = 'GET';
       form.action = '/foo';
 
-      if (QUnit.badFormMethodNormalization) {
-        equal(form.method, 'GET', 'form.method should be "GET"');
-      } else {
-        equal(form.method, 'get', 'form.method should be "get"');
-      }
+      equal(form.method, 'get', 'form.method should be "get"');
 
       QUnit.submit(form);
       return ready();
@@ -37,11 +33,7 @@
       form.method = 'POST';
       form.action = '/foo';
 
-      if (QUnit.badFormMethodNormalization) {
-        equal(form.method, 'POST', 'form.method should be "POST"');
-      } else {
-        equal(form.method, 'post', 'form.method should be "post"');
-      }
+      equal(form.method, 'post', 'form.method should be "post"');
 
       QUnit.submit(form);
       return ready();
@@ -67,11 +59,7 @@
       }
       form.action = '/foo';
 
-      if (QUnit.badFormMethodNormalization) {
-        equal(form.method, 'BREW', 'form.method should be "BREW"');
-      } else {
-        equal(form.method, 'get', 'form.method should be "get"');
-      }
+      equal(form.method, 'get', 'form.method should be "get"');
 
       QUnit.submit(form);
       return ready();

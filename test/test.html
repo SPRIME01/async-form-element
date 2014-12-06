@@ -45,14 +45,6 @@
       };
     };
 
-    // PhantomJS is an old turd that doesn't normalize form methods correctly
-    //   https://github.com/ariya/phantomjs/issues/12056
-    QUnit.badFormMethodNormalization = (function() {
-      var form = document.createElement('form');
-      form.method = 'POST';
-      return form.method !== 'post';
-    })();
-
     // IE will throw an exception if a non-GET/POST method is used in the
     // form.method setter.
     QUnit.unknownFormMethodSupported = (function() {
@@ -64,10 +56,6 @@
         return false;
       }
     })();
-
-    // Yet another PhantomJS bug
-    //   https://github.com/ariya/phantomjs/issues/10873
-    QUnit.xhrDeleteBodyBuggy = navigator.userAgent.match(/PhantomJS/);
 
     // An implementation effect of using XHR as the request, an charset=UTF-8 may
     // be appended to the raw enctype of the form.

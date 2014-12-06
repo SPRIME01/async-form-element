@@ -48,10 +48,6 @@ promiseTest('form DELETE request', 5, function() {
     equal(window.request.method, 'DELETE', 'request method should be "DELETE"');
     equal(window.request.url, '/foo/1', 'request url should be "/foo/1"');
     equal(window.request.body, '');
-    if (QUnit.xhrDeleteBodyBuggy) {
-      ok(true);
-    } else {
-      equal(QUnit.normalizeContentType(window.request.headers['content-type']), 'application/x-www-form-urlencoded');
-    }
+    equal(QUnit.normalizeContentType(window.request.headers['content-type']), 'application/x-www-form-urlencoded');
   });
 });
