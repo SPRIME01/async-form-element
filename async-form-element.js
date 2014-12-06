@@ -101,12 +101,11 @@
         var asyncevent = document.createEvent('Event');
         asyncevent.initEvent('asyncsubmit', true, true);
         var submission = asyncevent.submission = makeDeferred();
-        target.dispatchEvent(asyncevent);
 
-        if (asyncevent.defaultPrevented) {
-          submission.reject(new Error('asyncsubmit default action canceled'));
-        } else {
+        if (target.dispatchEvent(asyncevent)) {
           target.request().then(submission.resolve, submission.reject);
+        } else {
+          submission.reject(new Error('asyncsubmit default action canceled'));
         }
       });
     }

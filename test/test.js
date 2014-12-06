@@ -6,6 +6,18 @@ var badFormMethodNormalization = (function() {
   return form.method !== 'post';
 })();
 
+// IE will throw an exception if a non-GET/POST method is used in the
+// form.method setter.
+var unknownFormMethodSupported = (function() {
+  try {
+    var form = document.createElement('form');
+    form.method = 'BREW';
+    return form.method !== 'BREW';
+  } catch (error) {
+    return false;
+  }
+})();
+
 // Yet another PhantomJS bug
 //   https://github.com/ariya/phantomjs/issues/10873
 var xhrDeleteBodyBuggy = navigator.userAgent.match(/PhantomJS/);
@@ -21,8 +33,7 @@ function normalizeContentType(mimeType) {
 function submit(form) {
   var event = document.createEvent('Event');
   event.initEvent('submit', true, true);
-  form.dispatchEvent(event);
-  if (event.defaultPrevented === false) {
+  if (form.dispatchEvent(event)) {
     form.submit();
   }
 }
@@ -89,11 +100,15 @@ function submit(form) {
       var form = window.document.getElementById(formId);
       window.CustomElements.upgrade(form);
 
-      form.method = 'UPDATE';
+      if (unknownFormMethodSupported) {
+        form.method = 'BREW';
+      } else {
+        form.setAttribute('method', 'BREW');
+      }
       form.action = '/foo';
 
       if (badFormMethodNormalization) {
-        equal(form.method, 'UPDATE', 'form.method should be "UPDATE"');
+        equal(form.method, 'BREW', 'form.method should be "BREW"');
       } else {
         equal(form.method, 'get', 'form.method should be "get"');
       }
@@ -378,14 +393,14 @@ function submit(form) {
       var nextSubmitEvent = new Promise(function(resolve) {
         form.addEventListener('submit', function(event) {
           event.preventDefault();
+          equal(event.defaultPrevented, true);
           resolve(event);
         });
       });
 
       submit(form);
       return nextSubmitEvent;
-    }).then(function(event) {
-      equal(event.defaultPrevented, true);
+    }).then(function() {
       return ready(100);
     }).then(function() {
       ok(false, 'form was submitted');
@@ -408,14 +423,14 @@ function submit(form) {
         form.addEventListener('submit', function(event) {
           event.stopPropagation();
           event.preventDefault();
+          equal(event.defaultPrevented, true);
           resolve(event);
         });
       });
 
       submit(form);
       return nextSubmitEvent;
-    }).then(function(event) {
-      equal(event.defaultPrevented, true);
+    }).then(function() {
       return ready(100);
     }).then(function() {
       ok(false, 'form was submitted');
@@ -435,7 +450,11 @@ promiseTest('form PUT request', 5, function() {
     var form = window.document.getElementById('async-form');
     window.CustomElements.upgrade(form);
 
-    form.method = 'PUT';
+    if (unknownFormMethodSupported) {
+      form.method = 'PUT';
+    } else {
+      form.setAttribute('method', 'PUT');
+    }
     form.action = '/foo/1';
 
     equal(form.asyncMethod, 'put');
@@ -457,7 +476,11 @@ promiseTest('form DELETE request', 5, function() {
     var form = window.document.getElementById('async-form');
     window.CustomElements.upgrade(form);
 
-    form.method = 'DELETE';
+    if (unknownFormMethodSupported) {
+      form.method = 'DELETE';
+    } else {
+      form.setAttribute('method', 'DELETE');
+    }
     form.action = '/foo/1';
 
     equal(form.asyncMethod, 'delete');
