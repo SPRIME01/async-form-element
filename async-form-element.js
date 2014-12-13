@@ -67,6 +67,24 @@
       el.getAttribute('is') === 'async-form';
   }
 
+  var submitter = new WeakMap();
+
+  var lastButtonClickTarget;
+  function captureLastButton(event) {
+    lastButtonClickTarget = event.target;
+  }
+  function captureFormSubmitter(event) {
+    if (event.target.contains(lastButtonClickTarget)) {
+      // TODO: Must use closest('button')
+      submitter.set(event.target, lastButtonClickTarget);
+    } else {
+      submitter['delete'](event.target);
+    }
+  }
+  window.addEventListener('click', captureLastButton, true);
+  window.addEventListener('submit', captureFormSubmitter, true);
+
+
   var submitEventDefaultPrevented = new WeakMap();
   var submitEventDispatched = new WeakMap();
 
@@ -106,9 +124,10 @@
         var asyncevent = document.createEvent('Event');
         asyncevent.initEvent('asyncsubmit', true, true);
         var submission = asyncevent.submission = makeDeferred();
+        asyncevent.submitter = submitter.get(target);
 
         if (target.dispatchEvent(asyncevent)) {
-          target.request().then(submission.resolve, submission.reject);
+          target.request(asyncevent.submitter).then(submission.resolve, submission.reject);
         } else {
           submission.reject(new Error('asyncsubmit default action canceled'));
         }
@@ -131,31 +150,67 @@
     }
   };
 
-  AsyncFormElementPrototype.asyncSubmit = function() {
-    return this.request();
+  AsyncFormElementPrototype.asyncSubmit = function(submitter) {
+    return this.request(submitter);
   };
 
   AsyncFormElementPrototype.serializeFormData = function() {
     return new FormData(this);
   };
 
-  AsyncFormElementPrototype.serializeUrlEncoded = function() {
-    var params = [];
+  // https://html.spec.whatwg.org/multipage/forms.html#category-submit
+  AsyncFormElementPrototype.submittableElements = function() {
+    var submittable = [];
     var i, els = this.elements;
     for (i = 0; i < els.length; i++) {
-      params.push([els[i].name, els[i].value]);
+      switch (els[i].nodeName.toUpperCase()) {
+        case 'BUTTON':
+        case 'INPUT':
+        case 'KEYGEN':
+        case 'OBJECT':
+        case 'SELECT':
+        case 'TEXTAREA':
+          submittable.push(els[i]);
+      }
     }
+    return submittable;
+  };
 
+  // TODO: Prefer URLSearchParams when available
+  //   https://url.spec.whatwg.org/#dom-urlsearchparams
+  AsyncFormElementPrototype.serializeURLSearchParams = function(submitter) {
     var urlencoded = [];
-    for (i = 0; i < params.length; i++) {
-      urlencoded.push(encodeURIComponent(params[i][0]) +
+    var i, el, els = this.submittableElements();
+    for (i = 0; i < els.length; i++) {
+      el = els[i];
+
+      if (!el.name) {
+        continue;
+      }
+
+      if (el.disabled) {
+        continue;
+      }
+
+      if ((el.nodeName.toUpperCase() === 'BUTTON' ||
+          (el.nodeName.toUpperCase() === 'INPUT' && el.type === 'submit')) &&
+          el !== submitter) {
+        continue;
+      }
+
+      var value = el.value;
+      if (el === submitter && !value) {
+        value = 'Submit';
+      }
+
+      urlencoded.push(encodeURIComponent(el.name) +
         '=' +
-        encodeURIComponent(params[i][1]));
+        encodeURIComponent(value));
     }
     return urlencoded.join('&');
   };
 
-  AsyncFormElementPrototype.request = function() {
+  AsyncFormElementPrototype.request = function(submitter) {
     var form = this;
     return new Promise(function(resolve, reject) {
       var req = new XMLHttpRequest();
@@ -163,7 +218,7 @@
       var method = form.asyncMethod;
       var url = form.action;
       if (method === 'get') {
-        url += '?' + form.serializeUrlEncoded();
+        url += '?' + form.serializeURLSearchParams(submitter);
       }
       var body;
 
@@ -174,9 +229,9 @@
         req.setRequestHeader('Content-Type', form.enctype);
 
         if (form.enctype === 'multipart/form-data') {
-          body = form.serializeFormData();
+          body = form.serializeFormData(submitter);
         } else {
-          body = form.serializeUrlEncoded();
+          body = form.serializeURLSearchParams(submitter);
         }
       }
 
