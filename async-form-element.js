@@ -62,11 +62,16 @@
     Promise.resolve().then(fn);
   }
 
+  function isAsyncForm(el) {
+    return el.nodeName === 'FORM' &&
+      el.getAttribute('is') === 'async-form';
+  }
+
   var submitEventDefaultPrevented = new WeakMap();
   var submitEventDispatched = new WeakMap();
 
   function resolveSubmitDispatch(event) {
-    if (AsyncFormElementPrototype.isPrototypeOf(event.target)) {
+    if (isAsyncForm(event.target)) {
       var dispatched = submitEventDispatched.get(event);
       if (submitEventDefaultPrevented.get(event)) {
         dispatched.reject(new Error('submit default action canceled'));
@@ -77,7 +82,7 @@
   }
 
   function captureAsyncFormSubmit(event) {
-    if (AsyncFormElementPrototype.isPrototypeOf(event.target)) {
+    if (isAsyncForm(event.target)) {
       var target = event.target;
 
       // Always disable default form submit
@@ -177,7 +182,7 @@
 
       req.onload = function() {
         if (req.status === 200) {
-          resolve(req.response);
+          resolve(req.responseText);
         } else {
           reject(new Error(req.statusText));
         }
