@@ -6,8 +6,8 @@ env:
     - SAUCE_USERNAME=josh-async-form
     - SAUCE_ACCESS_KEY=3930526b-81b3-4d50-9ca9-0fa31edbc1aa
   matrix:
-    - SAUCE_PLATFORM="Windows 7" SAUCE_BROWSER="googlechrome"
-    - SAUCE_PLATFORM="Windows 7" SAUCE_BROWSER="firefox"
+    - SAUCE_PLATFORM="Windows 7" SAUCE_BROWSER="googlechrome" SAUCE_VERSION=""
+    - SAUCE_PLATFORM="Windows 7" SAUCE_BROWSER="firefox" SAUCE_VERSION=""
     - SAUCE_PLATFORM="Windows 7" SAUCE_BROWSER="internet explorer" SAUCE_VERSION="11"
     - SAUCE_PLATFORM="Windows 7" SAUCE_BROWSER="internet explorer" SAUCE_VERSION="10"
     - SAUCE_PLATFORM="Windows 7" SAUCE_BROWSER="internet explorer" SAUCE_VERSION="9"
