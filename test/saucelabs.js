@@ -21,14 +21,6 @@ function fetchJSON(options, obj) {
   });
 }
 
-function asyncForEach(ary, i, callback) {
-  if (i < ary.length) {
-    return Promise.resolve(callback(ary[i])).then(function() {
-      return asyncForEach(ary, i+1, callback);
-    });
-  }
-}
-
 function timeout(ms) {
   return new Promise(function(resolve, reject) {
     setTimeout(function() {
@@ -48,57 +40,49 @@ server.on('listening', function() {
   var port = server.address().port;
   var url  = 'http://localhost:'+port+'/test/test.html';
 
-  asyncForEach([
-    ['Windows 7', 'googlechrome', ''],
-    ['Windows 7', 'firefox', ''],
-    ['Windows 7', 'internet explorer', '11'],
-    ['Windows 7', 'internet explorer', '10'],
-    ['Windows 7', 'internet explorer', '9']
-  ], 0, function(platform) {
-    return fetchJSON({
-      method: 'POST',
-      hostname: 'saucelabs.com',
-      path: '/rest/v1/' + process.env.SAUCE_USERNAME + '/js-tests',
-      headers: {},
-      auth: process.env.SAUCE_USERNAME + ':' + process.env.SAUCE_ACCESS_KEY
-    }, {
-      'build': process.env.TRAVIS_BUILD_NUMBER,
-      'tags': [process.env.TRAVIS_PULL_REQUEST, process.env.TRAVIS_BRANCH],
-      'tunnel-identifier': process.env.TRAVIS_JOB_NUMBER,
-      'platforms': [platform],
-      'url': url,
-      'framework': 'qunit'
-    }).then(function(obj) {
-      function check() {
-        return fetchJSON({
-          method: 'POST',
-          hostname: 'saucelabs.com',
-          path: '/rest/v1/' + process.env.SAUCE_USERNAME + '/js-tests/status',
-          headers: {},
-          auth: process.env.SAUCE_USERNAME + ':' + process.env.SAUCE_ACCESS_KEY
-        }, obj).then(function(obj) {
-          if (obj.completed === true) {
-            return obj;
-          } else {
-            return wait(2 * 1000).then(check);
-          }
-        });
-      }
-      return Promise.race([check(), timeout(180 * 1000)]);
-    }).then(function(obj) {
-      var test = obj['js tests'][0];
+  fetchJSON({
+    method: 'POST',
+    hostname: 'saucelabs.com',
+    path: '/rest/v1/' + process.env.SAUCE_USERNAME + '/js-tests',
+    headers: {},
+    auth: process.env.SAUCE_USERNAME + ':' + process.env.SAUCE_ACCESS_KEY
+  }, {
+    'build': process.env.TRAVIS_BUILD_NUMBER,
+    'tags': [process.env.TRAVIS_PULL_REQUEST, process.env.TRAVIS_BRANCH],
+    'tunnel-identifier': process.env.TRAVIS_JOB_NUMBER,
+    'platforms': [[process.env.SAUCE_PLATFORM, process.env.SAUCE_BROWSER, process.env.SAUCE_VERSION]],
+    'url': url,
+    'framework': 'qunit'
+  }).then(function(obj) {
+    function check() {
+      return fetchJSON({
+        method: 'POST',
+        hostname: 'saucelabs.com',
+        path: '/rest/v1/' + process.env.SAUCE_USERNAME + '/js-tests/status',
+        headers: {},
+        auth: process.env.SAUCE_USERNAME + ':' + process.env.SAUCE_ACCESS_KEY
+      }, obj).then(function(obj) {
+        if (obj.completed === true) {
+          return obj;
+        } else {
+          return wait(2 * 1000).then(check);
+        }
+      });
+    }
+    return Promise.race([check(), timeout(180 * 1000)]);
+  }).then(function(obj) {
+    var test = obj['js tests'][0];
 
-      console.log(test.url);
-      console.log(test.platform);
-      console.log(test.result);
+    console.log(test.url);
+    console.log(test.platform);
+    console.log(test.result);
 
-      var passed = test.result && (typeof test.result === 'object') &&
-        test.result.passed === test.result.total;
+    var passed = test.result && (typeof test.result === 'object') &&
+      test.result.passed === test.result.total;
 
-      if (!passed) {
-        throw 'tests failed';
-      }
-    });
+    if (!passed) {
+      throw 'tests failed';
+    }
   }).then(function() {
     server.close();
     global.process.exit(0);
