@@ -3,6 +3,15 @@
 
   var AsyncFormElementPrototype = Object.create(HTMLFormElement.prototype);
 
+  // When a input type=submit button has no value, the browser supplies an
+  // implementation specific localized default string such as "Submit" or
+  // "Submit Query".
+  //
+  //   https://html.spec.whatwg.org/multipage/forms.html#submit-button-state-(type=submit)
+  //
+  AsyncFormElementPrototype.localizedDefaultSubmitButtonValue =
+    navigator.userAgent.match(/WebKit/) ? 'Submit' : 'Submit Query';
+
   Object.defineProperty(AsyncFormElementPrototype, 'asyncAccept', {
     get: function() {
       return this.getAttribute('async-accept') || '*/*';
@@ -200,7 +209,7 @@
 
       var value = el.value;
       if (el === submitter && !value) {
-        value = 'Submit';
+        value = this.localizedDefaultSubmitButtonValue;
       }
 
       urlencoded.push(encodeURIComponent(el.name) +

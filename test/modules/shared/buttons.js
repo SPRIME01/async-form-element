@@ -138,8 +138,9 @@
       QUnit.click(submitButton);
       return ready();
     }).then(function(window) {
+      var submit = window.AsyncFormElement.prototype.localizedDefaultSubmitButtonValue.replace(' ', '+');
       equal(window.request.method, 'GET', 'request method should be "GET"');
-      equal(window.request.url, '/foo?foo=Submit', 'request url should be "/foo?foo=Submit"');
+      equal(window.request.url, '/foo?foo=' + submit, 'request url should be "/foo?foo=Submit"');
       equal(window.request.body, '');
     });
   });
@@ -210,9 +211,10 @@
       QUnit.click(submitButton);
       return ready();
     }).then(function(window) {
+      var submit = window.AsyncFormElement.prototype.localizedDefaultSubmitButtonValue.replace(' ', '+');
       equal(window.request.method, 'POST', 'request method should be "GET"');
       equal(window.request.url.replace('?', ''), '/foo', 'request url should be "/foo"');
-      equal(window.request.body, 'foo=Submit');
+      equal(window.request.body, 'foo=' + submit);
     });
   });
 
