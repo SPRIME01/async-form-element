@@ -242,4 +242,83 @@
       equal(window.request.body, 'foo=bar');
     });
   });
+
+  promiseTest('form GET submit by button named and text click', 3, function() {
+    var ready = QUnit.createFrame();
+
+    return ready().then(function(window) {
+      var form = window.document.getElementById(formId);
+      window.CustomElements.upgrade(form);
+
+      form.method = 'GET';
+      form.action = '/foo';
+
+      var submitButton = window.document.createElement('button');
+      submitButton.type = 'submit';
+      submitButton.name = 'foo';
+      submitButton.value = 'bar';
+      form.appendChild(submitButton);
+
+      QUnit.click(submitButton);
+      return ready();
+    }).then(function(window) {
+      equal(window.request.method, 'GET', 'request method should be "GET"');
+      equal(window.request.url, '/foo?foo=bar', 'request url should be "/foo?foo=bar"');
+      equal(window.request.body, '');
+    });
+  });
+
+  promiseTest('form POST submit by button named and text click', 3, function() {
+    var ready = QUnit.createFrame();
+
+    return ready().then(function(window) {
+      var form = window.document.getElementById(formId);
+      window.CustomElements.upgrade(form);
+
+      form.method = 'POST';
+      form.action = '/foo';
+
+      var submitButton = window.document.createElement('button');
+      submitButton.type = 'submit';
+      submitButton.name = 'foo';
+      submitButton.value = 'bar';
+      form.appendChild(submitButton);
+
+      QUnit.click(submitButton);
+      return ready();
+    }).then(function(window) {
+      equal(window.request.method, 'POST', 'request method should be "GET"');
+      equal(window.request.url.replace('?', ''), '/foo', 'request url should be "/foo"');
+      equal(window.request.body, 'foo=bar');
+    });
+  });
+
+  promiseTest('form GET submit by button click within element', 3, function() {
+    var ready = QUnit.createFrame();
+
+    return ready().then(function(window) {
+      var form = window.document.getElementById(formId);
+      window.CustomElements.upgrade(form);
+
+      form.method = 'GET';
+      form.action = '/foo';
+
+      var submitButton = window.document.createElement('button');
+      submitButton.type = 'submit';
+      submitButton.name = 'foo';
+      submitButton.value = 'bar';
+      form.appendChild(submitButton);
+
+      var span = window.document.createElement('span');
+      span.textContent = 'Submit';
+      submitButton.appendChild(span);
+
+      QUnit.click(span);
+      return ready();
+    }).then(function(window) {
+      equal(window.request.method, 'GET', 'request method should be "GET"');
+      equal(window.request.url, '/foo?foo=bar', 'request url should be "/foo?foo=bar"');
+      equal(window.request.body, '');
+    });
+  });
 });

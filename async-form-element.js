@@ -76,19 +76,38 @@
       el.getAttribute('is') === 'async-form';
   }
 
+  function elementClosestButton(el) {
+    while (el) {
+      if (el.nodeName === 'BUTTON' || el.nodeName === 'INPUT') {
+        return el;
+      } else if (el.nodeName === 'FORM') {
+        return null;
+      } else {
+        el = el.parentElement;
+      }
+    }
+    return null;
+  }
+
   var submitter = new WeakMap();
 
-  var lastButtonClickTarget;
+  var lastElementClickTarget;
   function captureLastButton(event) {
-    lastButtonClickTarget = event.target;
+    lastElementClickTarget = event.target;
   }
   function captureFormSubmitter(event) {
-    if (event.target.contains(lastButtonClickTarget)) {
-      // TODO: Must use closest('button')
-      submitter.set(event.target, lastButtonClickTarget);
-    } else {
-      submitter['delete'](event.target);
+    var form = event.target;
+
+    if (lastElementClickTarget) {
+      var button = elementClosestButton(lastElementClickTarget);
+
+      if (form.contains(button)) {
+        submitter.set(form, button);
+        return;
+      }
     }
+
+    submitter['delete'](event.target);
   }
   window.addEventListener('click', captureLastButton, true);
   window.addEventListener('submit', captureFormSubmitter, true);
