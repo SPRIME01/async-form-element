@@ -38,7 +38,7 @@ function wait(ms) {
 var server = http.createServer(app);
 server.on('listening', function() {
   var port = server.address().port;
-  var url  = 'http://localhost:'+port+'/test/test.html';
+  var url  = 'http://localhost:'+port+'/test/test.html?hidepassed=1';
 
   fetchJSON({
     method: 'POST',

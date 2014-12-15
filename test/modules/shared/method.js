@@ -1,5 +1,5 @@
 ['form', 'async-form'].forEach(function(formId) {
-  module('shared method ' + formId);
+  module(formId);
 
   promiseTest('form GET request', 5, function() {
     var ready = QUnit.createFrame();

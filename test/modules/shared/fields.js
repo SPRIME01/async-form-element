@@ -1,5 +1,5 @@
 ['form', 'async-form'].forEach(function(formId) {
-  module('shared fields ' + formId);
+  module(formId);
 
   promiseTest('form GET request with field', 3, function() {
     var ready = QUnit.createFrame();

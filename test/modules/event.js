@@ -1,4 +1,4 @@
-module('event');
+module('async-form');
 
 promiseTest('form asyncsubmit skipped if submit prevent default', 1, function() {
   var ready = QUnit.createFrame();
