@@ -1,5 +1,5 @@
 ['form', 'async-form'].forEach(function(formId) {
-  module('shared multipart ' + formId);
+  module(formId);
 
   if (!('FormData' in window)) {
     // Skip multipart tests unless FormData is supported

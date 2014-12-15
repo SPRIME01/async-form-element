@@ -1,4 +1,4 @@
-module('accept');
+module('async-form');
 
 promiseTest('form POST request with default async-accept', 6, function() {
   var ready = QUnit.createFrame();

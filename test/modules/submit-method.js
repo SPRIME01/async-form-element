@@ -1,4 +1,4 @@
-module('submit method');
+module('async-form');
 
 promiseTest('form asyncSubmit GET request', 5, function() {
   var ready = QUnit.createFrame();

@@ -1,5 +1,5 @@
 ['form', 'async-form'].forEach(function(formId) {
-  module('shared cancelable ' + formId);
+  module(formId);
 
   promiseTest('form with submit event propagation stopped', 2, function() {
     var ready = QUnit.createFrame();
