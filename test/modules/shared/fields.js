@@ -51,6 +51,56 @@
     });
   });
 
+  promiseTest('form GET request with encoded field', 3, function() {
+    var ready = QUnit.createFrame();
+
+    return ready().then(function(window) {
+      var form = window.document.getElementById(formId);
+      window.CustomElements.upgrade(form);
+
+      form.method = 'GET';
+      form.action = '/foo';
+
+      var input = window.document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'input & name';
+      input.value = 'value + space';
+      form.appendChild(input);
+
+      QUnit.submit(form);
+      return ready();
+    }).then(function(window) {
+      equal(window.request.method, 'GET', 'request method should be "GET"');
+      equal(window.request.url, '/foo?input+%26+name=value+%2B+space', 'request url should be "/foo?input+%26+name=value+%2B+space"');
+      equal(window.request.body, '');
+    });
+  });
+
+  promiseTest('form POST request with encoded field', 3, function() {
+    var ready = QUnit.createFrame();
+
+    return ready().then(function(window) {
+      var form = window.document.getElementById(formId);
+      window.CustomElements.upgrade(form);
+
+      form.method = 'POST';
+      form.action = '/foo';
+
+      var input = window.document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'input & name';
+      input.value = 'value + space';
+      form.appendChild(input);
+
+      QUnit.submit(form);
+      return ready();
+    }).then(function(window) {
+      equal(window.request.method, 'POST', 'request method should be "POST"');
+      equal(window.request.url, '/foo', 'request url should be "/foo"');
+      equal(window.request.body, 'input+%26+name=value+%2B+space');
+    });
+  });
+
   promiseTest('form GET request with fields', 3, function() {
     var ready = QUnit.createFrame();
 

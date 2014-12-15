@@ -212,9 +212,9 @@
         value = this.localizedDefaultSubmitButtonValue;
       }
 
-      urlencoded.push(encodeURIComponent(el.name) +
+      urlencoded.push(encodeURIComponent(el.name).replace(/%20/g, '+') +
         '=' +
-        encodeURIComponent(value));
+        encodeURIComponent(value).replace(/%20/g, '+'));
     }
     return urlencoded.join('&');
   };
