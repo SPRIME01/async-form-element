@@ -1,5 +1,5 @@
 ['form', 'async-form'].forEach(function(formId) {
-  module('shared buttons ' + formId);
+  module(formId);
 
   promiseTest('form GET ignores unclicked buttons', 3, function() {
     var ready = QUnit.createFrame();
