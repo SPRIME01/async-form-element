@@ -264,4 +264,10 @@
     prototype: AsyncFormElementPrototype,
     'extends': 'form'
   });
+
+  // FF bug
+  //   https://bugzilla.mozilla.org/show_bug.cgi?id=1081037
+  if (!window.AsyncFormElement.prototype) {
+    window.AsyncFormElement.prototype = AsyncFormElementPrototype;
+  }
 })();
