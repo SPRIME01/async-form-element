@@ -1,6 +1,123 @@
 (function() {
   'use strict';
 
+  function nextTick(fn) {
+    Promise.resolve().then(fn);
+  }
+
+  function makeDeferred() {
+    var resolve, reject;
+    var promise = new Promise(function(_resolve, _reject) {
+      resolve = _resolve;
+      reject = _reject;
+    });
+    return Object.defineProperties(promise, {
+      resolve: { value: resolve },
+      reject: { value: reject }
+    });
+  }
+
+  function isAsyncForm(el) {
+    return el.nodeName === 'FORM' &&
+      el.getAttribute('is') === 'async-form';
+  }
+
+  function elementClosestButton(el) {
+    while (el) {
+      if (el.nodeName === 'BUTTON' || el.nodeName === 'INPUT') {
+        return el;
+      } else if (el.nodeName === 'FORM') {
+        return null;
+      } else {
+        el = el.parentElement;
+      }
+    }
+    return null;
+  }
+
+
+  var lastElementClickTarget;
+
+  function captureLastButton(event) {
+    lastElementClickTarget = event.target;
+  }
+
+  window.addEventListener('click', captureLastButton, true);
+
+
+  var formSubmitter = new WeakMap();
+
+  function captureFormSubmitter(event) {
+    var form = event.target;
+
+    if (lastElementClickTarget) {
+      var button = elementClosestButton(lastElementClickTarget);
+
+      if (form.contains(button)) {
+        formSubmitter.set(form, button);
+        return;
+      }
+    }
+
+    formSubmitter['delete'](event.target);
+  }
+
+  window.addEventListener('submit', captureFormSubmitter, true);
+
+
+  var submitEventDefaultPrevented = new WeakMap();
+  var submitEventDispatched = new WeakMap();
+
+  function resolveSubmitDispatch(event) {
+    if (isAsyncForm(event.target)) {
+      var dispatched = submitEventDispatched.get(event);
+      if (submitEventDefaultPrevented.get(event)) {
+        dispatched.reject(new Error('submit default action canceled'));
+      } else {
+        dispatched.resolve();
+      }
+    }
+  }
+
+  function captureAsyncFormSubmit(event) {
+    if (isAsyncForm(event.target)) {
+      var target = event.target;
+
+      // Always disable default form submit
+      event.preventDefault();
+
+      event.preventDefault = function() {
+        submitEventDefaultPrevented.set(event, true);
+      };
+
+      var dispatched = makeDeferred();
+      submitEventDispatched.set(event, dispatched);
+
+      nextTick(function() {
+        resolveSubmitDispatch(event);
+      });
+
+      window.removeEventListener('submit', resolveSubmitDispatch, false);
+      window.addEventListener('submit', resolveSubmitDispatch, false);
+
+      dispatched.then(function() {
+        var asyncevent = document.createEvent('Event');
+        asyncevent.initEvent('asyncsubmit', true, true);
+        var submission = asyncevent.submission = makeDeferred();
+        asyncevent.submitter = formSubmitter.get(target);
+
+        if (target.dispatchEvent(asyncevent)) {
+          target.request(asyncevent.submitter).then(submission.resolve, submission.reject);
+        } else {
+          submission.reject(new Error('asyncsubmit default action canceled'));
+        }
+      });
+    }
+  }
+
+  window.addEventListener('submit', captureAsyncFormSubmit, true);
+
+
   var AsyncFormElementPrototype = Object.create(HTMLFormElement.prototype);
 
   // When a input type=submit button has no value, the browser supplies an
@@ -54,116 +171,6 @@
       return value;
     }
   });
-
-  function makeDeferred() {
-    var resolve, reject;
-    var promise = new Promise(function(_resolve, _reject) {
-      resolve = _resolve;
-      reject = _reject;
-    });
-    return Object.defineProperties(promise, {
-      resolve: { value: resolve },
-      reject: { value: reject }
-    });
-  }
-
-  function nextTick(fn) {
-    Promise.resolve().then(fn);
-  }
-
-  function isAsyncForm(el) {
-    return el.nodeName === 'FORM' &&
-      el.getAttribute('is') === 'async-form';
-  }
-
-  function elementClosestButton(el) {
-    while (el) {
-      if (el.nodeName === 'BUTTON' || el.nodeName === 'INPUT') {
-        return el;
-      } else if (el.nodeName === 'FORM') {
-        return null;
-      } else {
-        el = el.parentElement;
-      }
-    }
-    return null;
-  }
-
-  var submitter = new WeakMap();
-
-  var lastElementClickTarget;
-  function captureLastButton(event) {
-    lastElementClickTarget = event.target;
-  }
-  function captureFormSubmitter(event) {
-    var form = event.target;
-
-    if (lastElementClickTarget) {
-      var button = elementClosestButton(lastElementClickTarget);
-
-      if (form.contains(button)) {
-        submitter.set(form, button);
-        return;
-      }
-    }
-
-    submitter['delete'](event.target);
-  }
-  window.addEventListener('click', captureLastButton, true);
-  window.addEventListener('submit', captureFormSubmitter, true);
-
-
-  var submitEventDefaultPrevented = new WeakMap();
-  var submitEventDispatched = new WeakMap();
-
-  function resolveSubmitDispatch(event) {
-    if (isAsyncForm(event.target)) {
-      var dispatched = submitEventDispatched.get(event);
-      if (submitEventDefaultPrevented.get(event)) {
-        dispatched.reject(new Error('submit default action canceled'));
-      } else {
-        dispatched.resolve();
-      }
-    }
-  }
-
-  function captureAsyncFormSubmit(event) {
-    if (isAsyncForm(event.target)) {
-      var target = event.target;
-
-      // Always disable default form submit
-      event.preventDefault();
-
-      event.preventDefault = function() {
-        submitEventDefaultPrevented.set(event, true);
-      };
-
-      var dispatched = makeDeferred();
-      submitEventDispatched.set(event, dispatched);
-
-      nextTick(function() {
-        resolveSubmitDispatch(event);
-      });
-
-      window.removeEventListener('submit', resolveSubmitDispatch, false);
-      window.addEventListener('submit', resolveSubmitDispatch, false);
-
-      dispatched.then(function() {
-        var asyncevent = document.createEvent('Event');
-        asyncevent.initEvent('asyncsubmit', true, true);
-        var submission = asyncevent.submission = makeDeferred();
-        asyncevent.submitter = submitter.get(target);
-
-        if (target.dispatchEvent(asyncevent)) {
-          target.request(asyncevent.submitter).then(submission.resolve, submission.reject);
-        } else {
-          submission.reject(new Error('asyncsubmit default action canceled'));
-        }
-      });
-    }
-  }
-
-  window.addEventListener('submit', captureAsyncFormSubmit, true);
 
   AsyncFormElementPrototype.createdCallback = function() {
     var value = this.getAttribute('onasyncsubmit');
