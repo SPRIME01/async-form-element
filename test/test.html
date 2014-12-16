@@ -66,6 +66,14 @@
       return mimeType.replace('; charset=UTF-8', '');
     }
 
+    QUnit.click = function(form) {
+      var event = document.createEvent('Event');
+      event.initEvent('click', true, true);
+      if (form.dispatchEvent(event)) {
+        form.click();
+      }
+    }
+
     QUnit.submit = function(form) {
       var event = document.createEvent('Event');
       event.initEvent('submit', true, true);
@@ -76,6 +84,7 @@
   </script>
   <script>QUnit.config.testTimeout = 5000;</script>
 
+  <script src="./modules/shared/buttons.js"></script>
   <script src="./modules/shared/cancelable.js"></script>
   <script src="./modules/shared/fields.js"></script>
   <script src="./modules/shared/method.js"></script>
